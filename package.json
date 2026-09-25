@@ -4,13 +4,13 @@
   "private": true,
   "scripts": {
     "fetch-assets": "node scripts/fetch-figma-assets.mjs",
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "node api.js && next dev",
+    "build": "node api.js && next build",
+    "start": "node api.js && next start",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "next": "15.5.4",
+    "next": "15.5.26",
     "react": "19.1.1",
     "react-dom": "19.1.1"
   },
