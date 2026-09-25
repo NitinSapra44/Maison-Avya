@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+/* Design tokens pulled from the Figma file */
+@theme {
+  --color-ink: #2e2d25;       /* headings, dark surfaces */
+  --color-cream: #faf8f5;     /* primary background */
+  --color-sand: #f3f0ec;      /* alternate section background */
+  --color-line: #e5e1db;      /* borders & dividers */
+  --color-sage: #a39e82;      /* primary button */
+  --color-gold: #c4a265;      /* accents, eyebrows */
+  --color-muted: #6b6a5e;     /* body copy */
+  --color-olive: #858066;     /* home-page eyebrows */
+
+  --font-serif: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+  --font-sans: var(--font-manrope), "Manrope", system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
