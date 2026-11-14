@@ -1,0 +1,46 @@
+name: Repo guard
+
+# Scans EVERY branch for .vscode folders and known malware patterns
+# (hidden VS Code auto-run tasks, obfuscated 'init' loaders, code hidden after
+# long whitespace, 'node init &&' npm scripts). Fails, and GitHub emails you, if found.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Warn on force-push
+        if: github.event_name == 'push' && github.event.forced
+        run: |
+          echo "::error::Branch '${{ github.ref_name }}' was FORCE-pushed by ${{ github.actor }}. The malware hid itself this way. Check this push."
+          exit 1
+
+      - name: Fetch all branches (no code is executed)
+        run: |
+          git init -q repo && cd repo
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git fetch -q --filter=blob:limit=2m origin '+refs/heads/*:refs/remotes/origin/*'
+
+      - name: Scan every branch
+        working-directory: repo
+        run: |
+          bad=0
+          for ref in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin); do
+            hits=""
+            v=$(git ls-tree -r --name-only "$ref" | grep -E '(^|/)\.vscode/' | head -5)
+            [ -n "$v" ] && hits="$hits .vscode-folder"
+            git grep -qI -E "global\.i *= *'" "$ref" -- ':!*.md' 2>/dev/null && hits="$hits obfuscated-loader"
+            git grep -qI -E '"[a-z:-]+" *: *"[^"]*node +[^"&]*init *&&' "$ref" -- '*package.json' 2>/dev/null && hits="$hits node-init-script"
+            git grep -qI -E '[[:blank:]]{100,}[^[:blank:][:cntrl:]]' "$ref" -- '*.js' '*.mjs' '*.cjs' '*.ts' 'init' '*/init' ':!*.min.js' 2>/dev/null && hits="$hits hidden-code-after-whitespace"
+            if [ -n "$hits" ]; then echo "::error::${ref#origin/}:$hits"; bad=1; else echo "ok  ${ref#origin/}"; fi
+          done
+          exit $bad
